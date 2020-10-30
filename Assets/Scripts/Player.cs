@@ -21,6 +21,18 @@ public class Player : MonoBehaviour
     [SerializeField]
     private GameObject hitMarkerPrefab;
 
+    [SerializeField]
+    private AudioSource weaponAudio;
+
+    [SerializeField]
+    private int currentAmmo;
+    private int maxAmmo = 50;
+    private bool isReloading;
+    private UIManager uIManager;
+
+    public bool hasCoin = false;
+
+
 
     // Start is called before the first frame update
     void Start()
@@ -30,31 +42,32 @@ public class Player : MonoBehaviour
 
         Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
+
+        currentAmmo = maxAmmo;
+
+        uIManager = GameObject.Find("Canvas").GetComponent<UIManager>();
     }
 
     // Update is called once per frame
     void Update()
     {
 
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0) && currentAmmo > 0)
         {
-            muzzleFlash.SetActive(true);
-            //Cross_hair shooting
-            Ray rayOrigin = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-            RaycastHit hitInfo;
 
-            if (Physics.Raycast(rayOrigin,out hitInfo))
-            {
-                Debug.Log("Ray cast hit something: " + hitInfo.transform.name);
-                GameObject hitMarker = (GameObject) Instantiate(hitMarkerPrefab,hitInfo.point, Quaternion.LookRotation(hitInfo.normal));
-                Destroy(hitMarker, 1f);
-            }
-            
-
+        Shoot();
         }
         else
         {
             muzzleFlash.SetActive(false);
+            weaponAudio.Stop();
+        }
+
+
+        if (Input.GetKeyDown(KeyCode.R) && isReloading == false)
+        {
+            isReloading = true;
+            StartCoroutine(Reload());
         }
 
 
@@ -69,6 +82,37 @@ public class Player : MonoBehaviour
         CalculateMovement();
         Physics.SyncTransforms();
 
+    }
+
+    void Shoot()
+    {
+        muzzleFlash.SetActive(true);
+        currentAmmo--;
+        uIManager.UpdateAmmo(currentAmmo);
+        //if audio is not playing
+        if (weaponAudio.isPlaying == false)
+        {
+            weaponAudio.Play();
+        }
+
+        //Cross_hair shooting
+        Ray rayOrigin = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        RaycastHit hitInfo;
+
+        if (Physics.Raycast(rayOrigin, out hitInfo))
+        {
+            Debug.Log("Ray cast hit something: " + hitInfo.transform.name);
+            GameObject hitMarker = (GameObject)Instantiate(hitMarkerPrefab, hitInfo.point, Quaternion.LookRotation(hitInfo.normal));
+            Destroy(hitMarker, 1f);
+        }
+
+    }
+
+    IEnumerator Reload()
+    {
+        yield return new WaitForSeconds(1.5f);
+        currentAmmo = maxAmmo;
+        isReloading = false;
     }
 
     void CalculateMovement()

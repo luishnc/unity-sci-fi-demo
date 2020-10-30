@@ -26,12 +26,14 @@ public class Player : MonoBehaviour
 
     [SerializeField]
     private int currentAmmo;
-    private int maxAmmo = 50;
+    private int maxAmmo = 300;
     private bool isReloading;
     private UIManager uIManager;
 
     public bool hasCoin = false;
-
+    
+    [SerializeField]
+    private GameObject weapon;
 
 
     // Start is called before the first frame update
@@ -52,7 +54,7 @@ public class Player : MonoBehaviour
     void Update()
     {
 
-        if (Input.GetMouseButton(0) && currentAmmo > 0)
+        if (Input.GetMouseButton(0) && currentAmmo > 0 && weapon.active)
         {
 
         Shoot();
@@ -104,6 +106,12 @@ public class Player : MonoBehaviour
             Debug.Log("Ray cast hit something: " + hitInfo.transform.name);
             GameObject hitMarker = (GameObject)Instantiate(hitMarkerPrefab, hitInfo.point, Quaternion.LookRotation(hitInfo.normal));
             Destroy(hitMarker, 1f);
+
+            Destructible crate = hitInfo.transform.GetComponent<Destructible>();
+            if (crate != null)
+            {
+                crate.DestroyCrate();
+            }
         }
 
     }
@@ -126,5 +134,10 @@ public class Player : MonoBehaviour
         velocity = transform.transform.TransformDirection(velocity);
 
         navmesh.Move(velocity * Time.deltaTime);
+    }
+
+    public void EnableWeapon()
+    {
+        weapon.SetActive(true);
     }
 }
